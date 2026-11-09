@@ -1,35 +1,71 @@
+/*
+ 
+YouTube Playback Diagnostics v2
+Shadowrocket / iOS
+Read-only: does not modify responses.*/
 
- // Shadowrocket YouTube playback diagnostics: metadata only, no response modification.
 (function () {
+  var tag = "[YT-DIAG-V2]";
+
+  function log(message) {
+    console.log(tag + " " + message);
+  }
+
   try {
-    var url = ($request && $request.url) || '';
-    var path = url.split('?')[0].replace(/^https?:\/\/[^/]+/, '');
-    var headers = ($response && $response.headers) || {};
-    var contentType = '';
+    var url = $request.url  "";
+    var endpoint = url.split("?")[0]
+      .replace(/^https?://[^/]+/, "");
+
+    var response = $response  {};
+    var headers = response.headers  {};
+
+    var contentType = "unknown";
 
     Object.keys(headers).forEach(function (key) {
-      if (key.toLowerCase() === 'content-type') {
+      if (key.toLowerCase() === "content-type") {
         contentType = String(headers[key]);
       }
     });
 
-    var body = ($response && $response.body) || '';
-    var bodyBytes = ($response && $response.bodyBytes);
+    var body = response.body;
+    var bytes = response.bodyBytes;
 
-    var size = bodyBytes && bodyBytes.byteLength != null
-      ? bodyBytes.byteLength
-      : (typeof body === 'string' ? body.length : -1);
+    var bodyType = typeof body;
+    var byteType = bytes
+      ? Object.prototype.toString.call(bytes)
+      : "unavailable";
 
-    console.log(
-      '[YT-DIAG] endpoint=' + path +
-      ' status=' + (($response && $response.status) || 'unknown') +
-      ' contentType=' + contentType +
-      ' bodySize=' + size +
-      ' bodyAvailable=' + (size > 0)
-    );
-  } catch (e) {
-    console.log('[YT-DIAG] error=' + String(e));
+    var byteLength = -1;
+
+    if (bytes && typeof bytes.byteLength === "number") {
+      byteLength = bytes.byteLength;
+    } else if (bytes && typeof bytes.length === "number") {
+      byteLength = bytes.length;
+    }
+
+    var textLength =
+      typeof body === "string" ? body.length : -1;
+
+    log("endpoint=" + endpoint);
+    log("status=" + (response.status  "unknown"));
+    log("contentType=" + contentType);
+    log("bodyType=" + bodyType);
+    log("bodyBytesType=" + byteType);
+    log("bodyBytesLength=" + byteLength);
+    log("bodyTextLength=" + textLength);
+
+    if (byteLength > 0) {
+      log("binaryResponseAvailable=true");
+    } else if (textLength > 0) {
+      log("textResponseAvailable=true");
+    } else {
+      log("responseBodyUnavailable=true");
+    }
+
+  } catch (error) {
+    log("error=" + String(error));
   }
 
+  // Preserve the original response.
   $done({});
 })();
